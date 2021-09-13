@@ -9,8 +9,10 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -21,6 +23,7 @@ public class AppUserService implements UserDetailsService {
 	private final static String USER_NOT_FOUND_MSG = "user with email %s not found";
 
     private final AppUserRepository appUserRepository;
+    private final AppUserRoleRepository appUserRoleRepository;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final ConfirmationTokenService confirmationTokenService;
 
@@ -33,6 +36,41 @@ public class AppUserService implements UserDetailsService {
                                 String.format(USER_NOT_FOUND_MSG, email)));
     }
     
+    public AppUser saveUser(AppUser user)
+    {
+    	boolean userExists = appUserRepository
+                .findByEmail(user.getEmail())
+                .isPresent();
+
+        if (userExists) 
+        {
+            throw new IllegalStateException("Error: email already taken");
+        }
+
+        String encodedPassword = bCryptPasswordEncoder.encode(user.getPassword());
+
+        user.setPassword(encodedPassword);
+        
+        user.setLocked(false);
+        user.setEnabled(true);
+
+        appUserRepository.save(user);
+        return(user);
+    }
+    
+    public AppUserRole saveRole(AppUserRole role)
+    {
+    	boolean roleExists = appUserRoleRepository.findByName(role.getName()).isPresent();
+    	
+    	if (roleExists) 
+        {
+            throw new IllegalStateException("Error: role already exists");
+        }
+    	
+    	appUserRoleRepository.save(role);
+        return(role);
+    }
+    
     public List<AppUser> getAllAppUsers() 
 	{
 	    return appUserRepository.findAll();
@@ -41,6 +79,34 @@ public class AppUserService implements UserDetailsService {
     public Optional<AppUser> getUser(String username)
     {
     	return appUserRepository.findByEmail(username);
+    }
+    
+    public Optional<AppUser> getUser(Long userId)
+    {
+    	return appUserRepository.findById(userId);
+    }
+    
+    public List<AppUserRole> getAllAppUserRoles() 
+	{
+	    return appUserRoleRepository.findAll();
+	}
+    
+    public Optional<AppUserRole> getUserRole(String name)
+    {
+    	return appUserRoleRepository.findByName(name);
+    }
+    
+    @Transactional
+    public void addRoleToUser(String username, String role)
+    {
+    	AppUserRole theRole = appUserRoleRepository.findByName(role).orElseThrow(() -> new IllegalStateException("Error: role does not exist"));
+    	AppUser theUser = appUserRepository.findByEmail(username).orElseThrow(() -> new IllegalStateException("Error: user does not exist"));
+    	Collection<AppUserRole> m = theUser.getAppUserRoles();
+    	if(!m.contains(theRole))
+    	{
+	    	m.add(theRole);
+	    	theUser.setAppUserRoles(m);
+    	}
     }
 
     public String signUpUser(AppUser appUser) {

@@ -22,7 +22,8 @@ public class DataConfig
     }
 	
 	@Bean
-	CommandLineRunner productDataInjector(ProductRepository productRepository, OrderRepository orderRepository, SaleRepository saleRepository, AppUserService userService)
+	CommandLineRunner productDataInjector(ProductRepository productRepository, OrderRepository orderRepository, SaleRepository saleRepository, 
+			AppUserService userService, AppUserRoleRepository appUserRoleRepository)
 	{
 		return args -> {
 			//Sample products
@@ -139,13 +140,57 @@ public class DataConfig
 			saleRepository.saveAll(
 					List.of(sal1, sal2)
 			);
+			//Sample roles
+//			USER_ROLE,
+//		    ADMIN_ROLE,
+//		    MANAGER_ROLE,
+//		    SUPERUSER_ROLE,
+//		    MAINTENANCE_ROLE,
+//		    AUDITOR_ROLE,
+//		    WAREHOUSE_ATTENDANT_ROLE,
+//		    RETAIL_ATTENDANT_ROLE
+			AppUserRole aur1 = new AppUserRole(
+					"USER_ROLE"
+			);
+			AppUserRole aur2 = new AppUserRole(
+					"ADMIN_ROLE"
+			);
+			AppUserRole aur3 = new AppUserRole(
+					"MANAGER_ROLE"
+			);
+			AppUserRole aur4 = new AppUserRole(
+					"SUPERUSER_ROLE"
+			);
+			AppUserRole aur5 = new AppUserRole(
+					"MAINTENANCE_ROLE"
+			);
+			AppUserRole aur6 = new AppUserRole(
+					"AUDITOR_ROLE"
+			);
+			AppUserRole aur7 = new AppUserRole(
+					"WAREHOUSE_ATTENDANT_ROLE"
+			);
+			AppUserRole aur8 = new AppUserRole(
+					"RETAIL_ATTENDANT_ROLE"
+			);
+			appUserRoleRepository.saveAll(
+					List.of(aur1, aur2, aur3, aur4, aur5, aur6, aur7, aur8)
+			);
 			//Sample users
+			ArrayList<AppUserRole> role1 = new ArrayList<>();
+			role1.add(aur8);
+			ArrayList<AppUserRole> role2 = new ArrayList<>();
+			role2.add(aur7);
+			ArrayList<AppUserRole> role3 = new ArrayList<>();
+			role3.add(aur4);
+			role3.add(aur7);
+			role3.add(aur8);
 			AppUser au1 = new AppUser(
 					"john",
 					"doe",
 					"john.doe@yahoo.com",
 					"123456",
-					AppUserRole.RETAIL_ATTENDANT_ROLE,
+					role1,
 					false,
 					true
 			);
@@ -154,7 +199,7 @@ public class DataConfig
 					"mash",
 					"peter.mash@gmail.com",
 					"123456",
-					AppUserRole.WAREHOUSE_ATTENDANT_ROLE,
+					role2,
 					false,
 					true
 			);
@@ -163,7 +208,7 @@ public class DataConfig
 					"MASKER",
 					"elon.masker@mailinator.com",
 					"123456",
-					AppUserRole.SUPERUSER_ROLE,
+					role3,
 					false,
 					true
 			);

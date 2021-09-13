@@ -1,8 +1,5 @@
 package com.patnox.supermarket.security;
 
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
@@ -12,6 +9,7 @@ import com.patnox.supermarket.orders.Order;
 import com.patnox.supermarket.products.Product;
 import com.patnox.supermarket.products.ProductService;
 
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,10 +18,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -32,6 +28,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import java.io.*;
+import java.net.URI;
 import java.time.*;
 
 @RestController
@@ -47,17 +44,39 @@ public class AppUserController
 	}
 	
 	@PostMapping("/v1/user")
-	public void createNewUser(@RequestBody AppUser newUser)
+	public ResponseEntity<AppUser> createNewUser(@RequestBody AppUser newUser)
 	{
-		newUser.setAppUserRole(AppUserRole.USER_ROLE);
-		newUser.setEnabled(true);
-		//log.error("Got FirstName: {}", newUser.getFirstName());
-		appUserService.signUpUser(newUser);
+		URI uri = URI.create(ServletUriComponentsBuilder.fromCurrentContextPath().path("api/v1/user").toUriString());
+		return ResponseEntity.created(uri).body(appUserService.saveUser(newUser));
+	}
+	
+	@PostMapping("/v1/user/role")
+	public ResponseEntity<AppUserRole> createNewRole(@RequestBody AppUserRole newRole)
+	{
+		URI uri = URI.create(ServletUriComponentsBuilder.fromCurrentContextPath().path("api/v1/user/role").toUriString());
+		return ResponseEntity.created(uri).body(appUserService.saveRole(newRole));
+	}
+	
+	@PostMapping("/v1/user/addrole")
+	public ResponseEntity<?> addRoleToUser(@RequestBody RoleToUserFrom addRole)
+	{
+		appUserService.addRoleToUser(addRole.getUsername(), addRole.getRolename());
+		return ResponseEntity.ok().build();
 	}
 
 	@GetMapping("/v1/user")
-	public List<AppUser> getAll() {
+	public List<AppUser> getAllUsers() {
 		return appUserService.getAllAppUsers();
+	}
+	
+	@GetMapping("/v1/user/role")
+	public List<AppUserRole> getAllRoles() {
+		return appUserService.getAllAppUserRoles();
+	}
+	
+	@GetMapping(path = "/v1/user/{userId}")
+	public AppUser getUser(@PathVariable("userId") Long userId) {
+		return appUserService.getUser(userId).orElseThrow(() -> new IllegalStateException("User with ID: " + userId + " does not exist"));
 	}
 	
 	@GetMapping("/refreshtoken")
@@ -106,5 +125,12 @@ public class AppUserController
 		{
 			throw new RuntimeException("Refresh Token Is Missing");
 		}
+	}
+	
+	@Data
+	class RoleToUserFrom
+	{
+		private String username;
+		private String rolename;
 	}
 }

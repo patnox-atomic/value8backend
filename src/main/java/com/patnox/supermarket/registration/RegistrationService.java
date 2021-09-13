@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 
 @Service
 @AllArgsConstructor
@@ -26,14 +27,17 @@ public class RegistrationService {
         if (!isValidEmail) {
             throw new IllegalStateException("email not valid");
         }
-
+        
+        AppUserRole role = appUserService.getUserRole("USER_ROLE").orElse(new AppUserRole("USER_ROLE"));
+        ArrayList<AppUserRole> roles = new ArrayList<>();
+		roles.add(role);
         String token = appUserService.signUpUser(
                 new AppUser(
                         request.getFirstName(),
                         request.getLastName(),
                         request.getEmail(),
                         request.getPassword(),
-                        AppUserRole.USER_ROLE
+                        roles
 
                 )
         );
