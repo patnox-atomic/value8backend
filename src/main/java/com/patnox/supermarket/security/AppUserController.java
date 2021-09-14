@@ -79,6 +79,26 @@ public class AppUserController
 		return appUserService.getUser(userId).orElseThrow(() -> new IllegalStateException("User with ID: " + userId + " does not exist"));
 	}
 	
+	@DeleteMapping(path = "/v1/user/{userId}")
+	public void deleteUser(@PathVariable("userId") Long userId)
+	{
+		appUserService.deleteUser(userId);
+	}
+	
+	@PutMapping(path = "/v1/user/{userId}")
+	public void updateUser(@PathVariable("userId") Long userId,
+				@RequestParam(required = false) String firstName,
+				@RequestParam(required = false) String lastName,
+				@RequestParam(required = false) String email,
+				@RequestParam(required = false) String password,
+				@RequestParam(required = false) Collection<AppUserRole> appUserRoles,
+				@RequestParam(required = false) Boolean locked,
+				@RequestParam(required = false) Boolean enabled
+			)
+	{
+		appUserService.updateUser(userId, firstName, lastName, email, password, appUserRoles, locked, enabled);
+	}
+	
 	@GetMapping("/refreshtoken")
 	public void refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
 		String authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
@@ -94,7 +114,8 @@ public class AppUserController
 				AppUser user = appUserService.getUser(username).orElseThrow();
 				String accessToken = JWT.create()
 						.withSubject(user.getUsername())
-						.withExpiresAt(new Date(System.currentTimeMillis() +(10 * 60 * 1000)))
+						.withClaim("username", user.getFirstName())
+						.withExpiresAt(new Date(System.currentTimeMillis() +(24 * 60 * 60 * 1000)))
 						.withIssuer(request.getRequestURL().toString())
 						.withClaim("roles", user.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList())) //check on this
 						.sign(algorithm);

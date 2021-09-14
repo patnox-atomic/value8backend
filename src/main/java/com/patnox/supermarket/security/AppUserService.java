@@ -1,5 +1,6 @@
 package com.patnox.supermarket.security;
 
+import com.patnox.supermarket.orders.Order;
 import com.patnox.supermarket.products.Product;
 import com.patnox.supermarket.registration.token.ConfirmationToken;
 import com.patnox.supermarket.registration.token.ConfirmationTokenService;
@@ -11,7 +12,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -95,6 +98,53 @@ public class AppUserService implements UserDetailsService {
     {
     	return appUserRoleRepository.findByName(name);
     }
+    
+    @Transactional
+	public void deleteUser(Long userId)
+	{
+		System.out.println("Request to delete User ID: " + userId);
+		boolean exists = appUserRepository.existsById(userId);
+		if(!exists)
+		{
+			System.err.println("Error: User with ID: " + userId + " does not exist");
+			throw new IllegalStateException("User with ID: " + userId + " does not exist");
+		}
+		else
+		{
+			System.out.println("User with ID: " + userId + " exists so we will proceed");
+			AppUser victimizedUser = appUserRepository.findById(userId).orElseThrow(() -> new IllegalStateException("User with ID: " + userId + " does not exist"));
+			victimizedUser.setEnabled(false);
+			victimizedUser.setLocked(true);
+		}
+	}
+    
+    @Transactional
+	public void updateUser(Long userId, String firstName, String lastName, String email, String password, Collection<AppUserRole> appUserRoles, Boolean locked, Boolean enabled)
+	{
+		System.out.println("Request to update user ID: " + userId);
+		boolean exists = appUserRepository.existsById(userId);
+		if(!exists)
+		{
+			System.err.println("Error: User with ID: " + userId + " does not exist");
+			throw new IllegalStateException("User with ID: " + userId + " does not exist");
+		}
+		else
+		{
+			System.out.println("User with ID: " + userId + " exists so we will proceed");
+			AppUser victimizedUser = appUserRepository.findById(userId).orElseThrow(() -> new IllegalStateException("User with ID: " + userId + " does not exist"));
+			if(appUserRoles != null && appUserRoles.size() > 0) victimizedUser.setAppUserRoles(appUserRoles);
+			if(firstName != null && firstName.length() > 0) victimizedUser.setFirstName(firstName);
+			if(lastName != null && lastName.length() > 0) victimizedUser.setLastName(lastName);
+			if(email != null && email.length() > 0) victimizedUser.setEmail(email);
+			if(locked != null) victimizedUser.setLocked(locked);
+			if(enabled != null) victimizedUser.setEnabled(enabled);
+			if(password != null && password.length() > 0)
+			{
+				String encodedPassword = bCryptPasswordEncoder.encode(password);
+				victimizedUser.setPassword(encodedPassword);
+			}
+		}
+	}
     
     @Transactional
     public void addRoleToUser(String username, String role)

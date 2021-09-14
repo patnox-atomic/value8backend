@@ -44,7 +44,7 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
 		String password = request.getParameter("password");
 		
 		log.info("Username is {}", username);
-		log.info("Password is {}", password);
+		//log.info("Password is {}", password);
 		
 		UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
 		
@@ -60,12 +60,14 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
 		//Give a one day access token. Reduce for better security
 		String accessToken = JWT.create()
 				.withSubject(user.getUsername())
+				.withClaim("username", user.getFirstName())
 				.withExpiresAt(new Date(System.currentTimeMillis() + (24 * 60 * 60 * 1000)))
 				.withIssuer(request.getRequestURL().toString())
 				.withClaim("roles", user.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()))
 				.sign(algorithm);
 		String refreshToken = JWT.create()
 				.withSubject(user.getUsername())
+				.withClaim("username", user.getFirstName())
 				.withExpiresAt(new Date(System.currentTimeMillis() + (24 * 60 * 60 * 1000)))
 				.withIssuer(request.getRequestURL().toString())
 				.sign(algorithm);

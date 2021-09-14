@@ -13,7 +13,6 @@ import java.util.*;
 import java.time.*;
 
 @RestController
-//@TestConfiguration
 @RequestMapping(path = "api/v1/order")
 public class OrderController {
 	
